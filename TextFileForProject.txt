@@ -1,0 +1,580 @@
+Question1 MVC Example 
+
+
+All Controller code and View Code
+
+
+
+***********************************************************************
+ProductsController code
+*********************************************************************
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Web;
+using System.Web.Mvc;
+using System.Data.SqlClient;
+using ProductMVCQuestion.Models;
+
+namespace ProductMVCQuestion.Controllers
+{
+    public class ProductsController : Controller
+    {
+        // GET: Products
+        public ActionResult Index()
+        {
+            List<Product> lstproduct = new List<Product>();
+            SqlConnection con = new SqlConnection();
+            con.ConnectionString =@"Data Source=(localdb)\MSSQLLocalDB;Initial Catalog=DotNetExam;Integrated Security=True;";
+            con.Open();
+
+            SqlCommand cmd = new SqlCommand();
+            cmd.Connection = con;
+            cmd.CommandType = System.Data.CommandType.StoredProcedure;
+            cmd.CommandText = "SPShowAllProducts";
+
+            SqlDataReader sdr= cmd.ExecuteReader();
+            while(sdr.Read())
+            {
+                lstproduct.Add(new Product
+                {
+                    ProductId = (int)sdr["ProductId"],
+                    ProductName = (string)sdr["ProductName"],
+                    Rate = (decimal)sdr["Rate"],
+                    Description = (string)sdr["Description"],
+                    CategoryName = (string)sdr["CategoryName"]
+                });
+            }
+            sdr.Close();
+            con.Close();
+            return View(lstproduct);
+        }
+
+        // GET: Products/Details/5
+        public ActionResult Details(int id)
+        {
+            return View();
+        }
+
+        // GET: Products/Create
+        public ActionResult Create()
+        {
+            return View();
+        }
+
+        // POST: Products/Create
+        [HttpPost]
+        public ActionResult Create(FormCollection collection)
+        {
+            try
+            {
+                // TODO: Add insert logic here
+
+                return RedirectToAction("Index");
+            }
+            catch
+            {
+                return View();
+            }
+        }
+
+        // GET: Products/Edit/5
+        public ActionResult Edit(int id=1)
+        {
+            SqlConnection con = new SqlConnection();
+            con.ConnectionString= @"Data Source=(localdb)\MSSQLLocalDB;Initial Catalog=DotNetExam;Integrated Security=True;";
+            con.Open();
+
+            SqlCommand cmd = new SqlCommand();
+            cmd.Connection = con;
+            cmd.CommandType = System.Data.CommandType.StoredProcedure;
+            cmd.CommandText = "SPShowProductIdWise";
+            cmd.Parameters.AddWithValue("@ProductId", id);
+
+            Product product = null;
+
+            SqlDataReader sdr= cmd.ExecuteReader();
+            if(sdr.Read())
+            {
+                product = new Product
+                {
+                    ProductId = (int)sdr["ProductId"],
+                    ProductName = (string)sdr["ProductName"],
+                    Rate = (decimal)sdr["Rate"],
+                    Description = (string)sdr["Description"],
+                    CategoryName = (string)sdr["CategoryName"]
+                };
+            }
+            else
+            {
+                ViewBag.ErrorMessage = "Product Not FOund";
+            }
+
+            sdr.Close();
+            con.Close();
+            return View(product);
+        }
+
+        // POST: Products/Edit/5
+        [HttpPost]
+        public ActionResult Edit(int? id, Product product)
+        {
+            try
+            {
+                SqlConnection con = new SqlConnection();
+                con.ConnectionString= @"Data Source=(localdb)\MSSQLLocalDB;Initial Catalog=DotNetExam;Integrated Security=True;";
+                con.Open();
+
+
+                SqlCommand cmd = new SqlCommand();
+                cmd.Connection = con;
+                cmd.CommandType = System.Data.CommandType.StoredProcedure;
+                cmd.CommandText = "SPUpdateProduct";
+               
+                cmd.Parameters.AddWithValue("@ProductName", product.ProductName);
+                cmd.Parameters.AddWithValue("@Rate", product.Rate);
+                cmd.Parameters.AddWithValue("@Description", product.Description);
+                cmd.Parameters.AddWithValue("@CategoryName", product.CategoryName);
+                cmd.Parameters.AddWithValue("@ProductId", product.ProductId);
+
+
+                cmd.ExecuteNonQuery();
+                con.Close();
+
+                return RedirectToAction("Index");
+            }
+            catch
+            {
+                return View();
+            }
+        }
+
+        // GET: Products/Delete/5
+        public ActionResult Delete(int id)
+        {
+            return View();
+        }
+
+        // POST: Products/Delete/5
+        [HttpPost]
+        public ActionResult Delete(int id, FormCollection collection)
+        {
+            try
+            {
+                // TODO: Add delete logic here
+
+                return RedirectToAction("Index");
+            }
+            catch
+            {
+                return View();
+            }
+        }
+
+        public ActionResult PartialViewForAll()
+        {
+            return View();
+        }
+    }
+}
+
+******************************
+MyLayout view code
+*********************************
+
+
+@{
+    Layout = null;
+}
+
+<!DOCTYPE html>
+
+<html>
+<head>
+    <meta name="viewport" content="width=device-width" />
+    <title>@ViewBag.Title -_MyLayout</title>
+</head>
+<body>
+    <div>
+    </div>
+
+    <div class="container body-content">
+        @RenderBody()
+        @*<hr />*@
+        @*<footer>
+            <p>&copy; @DateTime.Now.Year - My ASP.NET Application</p>
+        </footer>*@
+    </div>
+</body>
+</html>
+
+
+*************************
+PartialView Code
+**********************************
+
+
+@{
+    ViewBag.Title = "PartialViewForAll";
+    Layout = "~/Views/Shared/_MyLayout.cshtml";
+}
+
+
+<div class="bg-info">
+    <div><h4>Created By (Nikita N. Shende)</h4></div>
+    <div><h4>Center (JUHU)</h4></div>
+    <div><h4>Roll No (210940520047)</h4></div>
+    
+</div>
+
+
+*********************
+Index view Code
+************************
+
+
+@model IEnumerable<ProductMVCQuestion.Models.Product>
+
+@{
+    ViewBag.Title = "Index";
+    Layout = "~/Views/Shared/_MyLayout.cshtml";
+}
+
+<h2>Index</h2>
+
+<p>
+    @Html.ActionLink("Create New", "Create")
+</p>
+<table class="table-bordered">
+    <tr>
+        <th>
+            @Html.DisplayNameFor(model => model.ProductId)
+        </th>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+        <th>
+            @Html.DisplayNameFor(model => model.ProductName)
+        </th>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+        <th>
+            @Html.DisplayNameFor(model => model.Rate)
+        </th>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+        <th>
+            @Html.DisplayNameFor(model => model.Description)
+        </th>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+        <th>
+            @Html.DisplayNameFor(model => model.CategoryName)
+        </th>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+        <th></th>
+    </tr>
+
+    @foreach (var item in Model)
+    {
+<tr>
+
+    <td>
+        <a href="@Url.Action("Edit","Products",new {id = item.ProductId })">
+            @Html.DisplayFor(modelItem => item.ProductId)
+        </a>
+    </td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+    <td>
+        @Html.DisplayFor(modelItem => item.ProductName)
+    </td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+    <td>
+        @Html.DisplayFor(modelItem => item.Rate)
+    </td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+    <td>
+        @Html.DisplayFor(modelItem => item.Description)
+    </td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+    <td>
+        @Html.DisplayFor(modelItem => item.CategoryName)
+    </td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+    @*<td>
+            @Html.ActionLink("Edit", "Edit", new { id = item.ProductId }) |
+            @Html.ActionLink("Details", "Details", new { id = item.ProductId }) |
+            @Html.ActionLink("Delete", "Delete", new { id = item.ProductId })
+        </td>*@
+</tr>
+    }
+
+</table>
+@{
+    Html.RenderPartial("PartialViewForAll");
+}
+
+
+************************
+Edit view Code
+*******************
+
+
+@model ProductMVCQuestion.Models.Product
+
+@{
+    ViewBag.Title = "Edit";
+    Layout = "~/Views/Shared/_MyLayout.cshtml";
+}
+
+<h2>Edit</h2>
+
+@using (Html.BeginForm())
+{
+    @Html.AntiForgeryToken()
+
+    <div class="form-horizontal">
+        <h4>Product</h4>
+        <hr />
+        @Html.ValidationSummary(true, "", new { @class = "text-danger" })
+        @Html.HiddenFor(model => model.ProductId)
+
+
+        <div class="form-group">
+            @Html.LabelFor(model => model.ProductId, htmlAttributes: new { @class = "control-label col-md-2" })
+            <div class="col-md-10">
+                @*@Html.EditorFor(model => model.ProductId, new { htmlAttributes = new { @class = "form-control" } })*@
+                @Html.DisplayFor(model => model.ProductId)
+                @Html.ValidationMessageFor(model => model.ProductId, "", new { @class = "text-danger" })
+            </div>
+        </div>
+
+
+        <div class="form-group">
+            @Html.LabelFor(model => model.ProductName, htmlAttributes: new { @class = "control-label col-md-2" })
+            <div class="col-md-10">
+                @Html.EditorFor(model => model.ProductName, new { htmlAttributes = new { @class = "form-control" } })
+                @Html.ValidationMessageFor(model => model.ProductName, "", new { @class = "text-danger" })
+            </div>
+        </div>
+
+        <div class="form-group">
+            @Html.LabelFor(model => model.Rate, htmlAttributes: new { @class = "control-label col-md-2" })
+            <div class="col-md-10">
+                @Html.EditorFor(model => model.Rate, new { htmlAttributes = new { @class = "form-control" } })
+                @Html.ValidationMessageFor(model => model.Rate, "", new { @class = "text-danger" })
+            </div>
+        </div>
+
+        <div class="form-group">
+            @Html.LabelFor(model => model.Description, htmlAttributes: new { @class = "control-label col-md-2" })
+            <div class="col-md-10">
+                @Html.EditorFor(model => model.Description, new { htmlAttributes = new { @class = "form-control" } })
+                @Html.ValidationMessageFor(model => model.Description, "", new { @class = "text-danger" })
+            </div>
+        </div>
+
+        <div class="form-group">
+            @Html.LabelFor(model => model.CategoryName, htmlAttributes: new { @class = "control-label col-md-2" })
+            <div class="col-md-10">
+                @Html.EditorFor(model => model.CategoryName, new { htmlAttributes = new { @class = "form-control" } })
+                @Html.ValidationMessageFor(model => model.CategoryName, "", new { @class = "text-danger" })
+            </div>
+        </div>
+
+        <div class="form-group">
+            <div class="col-md-offset-2 col-md-10">
+                <input type="submit" value="Update" class="btn btn-default" />
+            </div>
+        </div>
+    </div>
+}
+
+<div>
+    @Html.ActionLink("Back to List", "Index")
+</div>
+@{
+    Html.RenderPartial("PartialViewForAll");
+}
+
+*************************************
+Product Model class Code
+
+*************************
+
+using System;
+using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
+using System.Linq;
+using System.Web;
+
+namespace ProductMVCQuestion.Models
+{
+    public class Product
+    {
+        [Key]
+        [Display(Name = "Product ID")]
+        public int ProductId { get; set; }
+
+        [DataType(DataType.Text)]
+        [Required(ErrorMessage ="Please enter product name")]
+        [StringLength(50,ErrorMessage ="The {0} values should not exceed {1} characters")]
+        [MinLength(3),MaxLength(50)]
+        [Display(Name ="Product  Name")]
+        public string ProductName { get; set; }
+
+
+        [DataType(DataType.Text)]
+        [Required(ErrorMessage = "Please enter rate for  product ")]
+        [Display(Name = "Rate")]
+        public decimal Rate { get; set; }
+
+        [DataType(DataType.Text)]
+        [Required(ErrorMessage ="Please enter description ")]
+        [StringLength(200,ErrorMessage ="The {0} not exceed {1} characters")]
+        [MinLength(5),MaxLength(200)]
+        [Display(Name ="Description")]
+        public string Description { get; set; }
+
+
+        [DataType(DataType.Text)]
+        [Required(ErrorMessage ="Please enter Category name")]
+        [StringLength(50,ErrorMessage ="The {0} not exceed the {1} characters")]
+        [MinLength(3),MaxLength(50)]
+        [Display(Name ="Category  Name")]
+        public string CategoryName { get; set; }
+    }
+}
+
+
+
+
+
+
+
+***********************************************Question 2 WEBAPI Code*******************************
+
+
+*********************
+Controller code
+*******************
+
+
+using System;
+using System.Collections.Generic;
+using System.Data;
+using System.Data.Entity;
+using System.Data.Entity.Infrastructure;
+using System.Linq;
+using System.Net;
+using System.Net.Http;
+using System.Web.Http;
+using System.Web.Http.Description;
+using WebAPIProductExample;
+
+namespace WebAPIProductExample.Controllers
+{
+    public class ProductsController : ApiController
+    {
+        private DotNetExamEntities db = new DotNetExamEntities();
+
+        // GET: api/Products
+        public IQueryable<Product> GetProducts()
+        {
+            return db.Products;
+        }
+
+        // GET: api/Products/5
+        [ResponseType(typeof(Product))]
+        public IHttpActionResult GetProduct(int id)
+        {
+            Product product = db.Products.Find(id);
+            if (product == null)
+            {
+                return NotFound();
+            }
+
+            return Ok(product);
+        }
+
+        // PUT: api/Products/5
+        [ResponseType(typeof(void))]
+        public IHttpActionResult PutProduct(int id, Product product)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
+            if (id != product.ProductId)
+            {
+                return BadRequest();
+            }
+
+            db.Entry(product).State = EntityState.Modified;
+
+            try
+            {
+                db.SaveChanges();
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                if (!ProductExists(id))
+                {
+                    return NotFound();
+                }
+                else
+                {
+                    throw;
+                }
+            }
+
+            return StatusCode(HttpStatusCode.NoContent);
+        }
+
+        // POST: api/Products
+        [ResponseType(typeof(Product))]
+        public IHttpActionResult PostProduct(Product product)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
+            db.Products.Add(product);
+
+            try
+            {
+                db.SaveChanges();
+            }
+            catch (DbUpdateException)
+            {
+                if (ProductExists(product.ProductId))
+                {
+                    return Conflict();
+                }
+                else
+                {
+                    throw;
+                }
+            }
+
+            return CreatedAtRoute("DefaultApi", new { id = product.ProductId }, product);
+        }
+
+        // DELETE: api/Products/5
+        [ResponseType(typeof(Product))]
+        public IHttpActionResult DeleteProduct(int id)
+        {
+            Product product = db.Products.Find(id);
+            if (product == null)
+            {
+                return NotFound();
+            }
+
+            db.Products.Remove(product);
+            db.SaveChanges();
+
+            return Ok(product);
+        }
+
+        protected override void Dispose(bool disposing)
+        {
+            if (disposing)
+            {
+                db.Dispose();
+            }
+            base.Dispose(disposing);
+        }
+
+        private bool ProductExists(int id)
+        {
+            return db.Products.Count(e => e.ProductId == id) > 0;
+        }
+    }
+}
